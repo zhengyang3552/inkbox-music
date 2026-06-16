@@ -86,6 +86,7 @@ export async function createSongFromPath(
     // Metadata failure must not block importing a playable local file.
   }
 
+  const hasSameNameLyric = await localPathExists(inferredLyricPath);
   const song: Song = {
     id: stableSongId(path),
     path,
@@ -99,7 +100,8 @@ export async function createSongFromPath(
     fileSize,
     lyricPath:
       lyricPathOverride ??
-      ((await localPathExists(inferredLyricPath)) ? inferredLyricPath : undefined),
+      (hasSameNameLyric ? inferredLyricPath : undefined),
+    lyricSource: lyricPathOverride ? "local-import" : hasSameNameLyric ? "same-name" : undefined,
     metadataSource: "filename",
     metadataResolved,
     ...parsed,
@@ -146,6 +148,7 @@ export async function createSongFromBrowserFile(
     container: extensionOf(file.name).toUpperCase(),
     fileSize: file.size,
     lyricPath,
+    lyricSource: lyricPath ? "same-name" : undefined,
     metadataSource: "filename",
     metadataResolved,
     ...parsed,
@@ -178,6 +181,7 @@ export async function refreshSongMetadata(song: Song): Promise<Partial<Song>> {
     fileSize: refreshed.fileSize,
     embeddedCover: refreshed.embeddedCover,
     lyricPath: refreshed.lyricPath ?? song.lyricPath,
+    lyricSource: refreshed.lyricSource ?? song.lyricSource,
     metadataSource: refreshed.metadataSource,
     metadataResolved: refreshed.metadataResolved,
   };

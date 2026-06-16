@@ -9,6 +9,10 @@ import {
 import { openExternal } from "../services/systemService";
 
 const releaseNotes = [
+  "新增在线获取歌词",
+  "简化三点菜单",
+  "简化封面系统",
+  "默认渐变封面预设移动到设置页",
   "新增歌单系统",
   "新增主题系统",
   "新增桌面歌词",
@@ -36,7 +40,7 @@ export function AboutPage() {
       <header className="about-hero">
         <span className="about-hero__icon"><Music2 /></span>
         <div>
-          <span className="eyebrow">RELEASE 1.1.0</span>
+          <span className="eyebrow">RELEASE 1.1.2</span>
           <h1>INKBOX Music</h1>
           <p>一个注重视觉体验的本地音乐播放器。</p>
         </div>
@@ -47,7 +51,7 @@ export function AboutPage() {
           <header><AppWindow /><div><span>应用信息</span><h2>关于 INKBOX Music</h2></div></header>
           <p>支持本地音乐导入、Apple Music 风格歌词显示、歌词点击跳转、封面显示、渐变封面、喜欢列表和播放队列。</p>
           <dl>
-            <div><dt>版本</dt><dd>v1.1.0</dd></div>
+            <div><dt>版本</dt><dd>v1.1.2</dd></div>
             <div><dt>类型</dt><dd>本地音乐播放器</dd></div>
             <div><dt>技术栈</dt><dd>Tauri + React + TypeScript</dd></div>
             <div><dt>作者</dt><dd>ink</dd></div>
@@ -55,7 +59,7 @@ export function AboutPage() {
         </section>
 
         <section className="about-card about-card--release">
-          <header><CheckCircle2 /><div><span>更新日志</span><h2>v1.1.0</h2></div></header>
+          <header><CheckCircle2 /><div><span>更新日志</span><h2>v1.1.2</h2></div></header>
           <ul>{releaseNotes.map((item) => <li key={item}>{item}</li>)}</ul>
         </section>
 

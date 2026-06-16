@@ -1,7 +1,7 @@
 import { isTauri } from "@tauri-apps/api/core";
 import { emitTo, listen } from "@tauri-apps/api/event";
 import { useEffect, useMemo, useState } from "react";
-import { readLyrics } from "../services/lyricService";
+import { readSongLyrics } from "../services/lyricService";
 import { usePlayerStore } from "../stores/playerStore";
 import type { LyricLine } from "../types/lyric";
 
@@ -30,9 +30,9 @@ export function DesktopLyricsBridge() {
 
   useEffect(() => {
     setLines([]);
-    if (!song?.lyricPath) return;
-    void readLyrics(song.lyricPath).then((result) => setLines(result.lines)).catch(() => setLines([]));
-  }, [song?.id, song?.lyricPath]);
+    if (!song) return;
+    void readSongLyrics(song).then((result) => setLines(result.lines)).catch(() => setLines([]));
+  }, [song?.id, song?.lyricPath, song?.onlineLyrics?.id]);
 
   const activeIndex = useMemo(() => {
     let index = -1;

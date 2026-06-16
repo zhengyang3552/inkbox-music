@@ -1,12 +1,14 @@
-import { Activity, Droplets, Gauge, MonitorCog, Palette, Settings, Sparkles } from "lucide-react";
+import { Droplets, Gauge, MonitorCog, Palette, Settings, Sparkles } from "lucide-react";
 import { usePlayerStore } from "../stores/playerStore";
 import { type AccentColor, type ThemeMode, useThemeStore } from "../stores/themeStore";
+import { gradientCoverStyle, gradientForPreset, gradientPresets, type GradientPresetName } from "../utils/gradientCover";
 
 const modes: Array<[ThemeMode, string]> = [["dark", "深色"], ["black", "更深黑色"], ["system", "跟随系统"]];
 const accents: Array<[AccentColor, string]> = [
   ["blue-violet", "蓝紫"], ["pink-violet", "粉紫"], ["cyan", "青蓝"],
   ["orange-red", "橙红"], ["green", "绿色"],
 ];
+const gradientPresetNames = Object.keys(gradientPresets) as GradientPresetName[];
 
 export function SettingsPage() {
   const volume = usePlayerStore((state) => state.volume);
@@ -29,17 +31,23 @@ export function SettingsPage() {
         <div className="toggle-list">
           <label><span><Droplets /><span><strong>毛玻璃</strong><small>为侧边栏、播放器和弹窗添加透明模糊</small></span></span><input type="checkbox" checked={theme.glass} onChange={(event) => theme.setGlass(event.target.checked)} /></label>
           <label><span><Palette /><span><strong>模糊封面背景</strong><small>在正在播放页面显示封面氛围背景</small></span></span><input type="checkbox" checked={theme.coverBlur} onChange={(event) => theme.setCoverBlur(event.target.checked)} /></label>
+          <label><span><Sparkles /><span><strong>歌词模糊</strong><small>在当前歌词上下方添加柔和景深效果</small></span></span><input type="checkbox" checked={theme.lyricBlur} onChange={(event) => theme.setLyricBlur(event.target.checked)} /></label>
           <label><span><Gauge /><span><strong>降低动画</strong><small>减少页面、歌词滚动与模糊过渡动画</small></span></span><input type="checkbox" checked={theme.reduceMotion} onChange={(event) => theme.setReduceMotion(event.target.checked)} /></label>
         </div>
       </section>
       <section className="settings-card settings-card--wide">
-        <header><Activity /><div><h2>音频可视化</h2><p>在正在播放页面显示实时音频动画</p></div></header>
-        <div className="visualizer-settings">
-          <label className="settings-switch"><span><strong>启用音频可视化</strong><small>使用 Web Audio API 分析当前播放内容</small></span><input type="checkbox" checked={theme.visualizerEnabled} onChange={(event) => theme.setVisualizerEnabled(event.target.checked)} /></label>
-          <div className="segmented-control">
-            <button className={theme.visualizerMode === "spectrum" ? "is-active" : ""} onClick={() => theme.setVisualizerMode("spectrum")}>柔和频谱柱</button>
-            <button className={theme.visualizerMode === "waveform" ? "is-active" : ""} onClick={() => theme.setVisualizerMode("waveform")}>平滑波形</button>
-          </div>
+        <header><Palette /><div><h2>默认渐变封面风格</h2><p>无内嵌封面的歌曲会统一使用此风格</p></div></header>
+        <div className="gradient-preset-picker">
+          {gradientPresetNames.map((preset) => (
+            <button
+              className={theme.globalGradientPreset === preset ? "is-active" : ""}
+              key={preset}
+              onClick={() => theme.setGlobalGradientPreset(preset)}
+            >
+              <i style={gradientCoverStyle(gradientForPreset(preset))} />
+              <span>{preset}</span>
+            </button>
+          ))}
         </div>
       </section>
       <section className="settings-card settings-card--wide">

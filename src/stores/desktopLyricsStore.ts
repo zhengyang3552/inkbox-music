@@ -28,6 +28,7 @@ async function openWindow() {
     minHeight: 80,
     decorations: false,
     transparent: true,
+    shadow: false,
     alwaysOnTop: true,
     resizable: true,
     skipTaskbar: true,

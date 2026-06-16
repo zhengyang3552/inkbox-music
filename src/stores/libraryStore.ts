@@ -13,6 +13,11 @@ interface LibraryState {
   setError: (message: string | null) => void;
 }
 
+function sanitizeSong(song: Song): Song {
+  const { customCover: _customCover, coverUrl: _coverUrl, gradientCover: _gradientCover, coverMode: _coverMode, ...rest } = song;
+  return rest;
+}
+
 export const useLibraryStore = create<LibraryState>()(persist((set) => ({
   songs: [],
   isImporting: false,
@@ -20,11 +25,11 @@ export const useLibraryStore = create<LibraryState>()(persist((set) => ({
   addSongs: (incoming) =>
     set((state) => {
       const known = new Set(state.songs.map((song) => song.path));
-      return { songs: [...state.songs, ...incoming.filter((song) => !known.has(song.path))] };
+      return { songs: [...state.songs, ...incoming.filter((song) => !known.has(song.path)).map(sanitizeSong)] };
     }),
   updateSong: (id, changes) =>
     set((state) => ({
-      songs: state.songs.map((song) => (song.id === id ? { ...song, ...changes } : song)),
+      songs: state.songs.map((song) => (song.id === id ? sanitizeSong({ ...song, ...changes }) : song)),
     })),
   removeSong: (id) =>
     set((state) => ({ songs: state.songs.filter((song) => song.id !== id) })),
@@ -32,14 +37,14 @@ export const useLibraryStore = create<LibraryState>()(persist((set) => ({
   setError: (error) => set({ error }),
 }), {
   name: "inkbox-library",
-  version: 2,
+  version: 3,
   migrate: (persisted) => {
     const state = persisted as Partial<LibraryState>;
     return {
       ...state,
       songs: (state.songs ?? []).filter(
         (song) => song.sourceType === "tauri" || song.path.startsWith("browser-audio://"),
-      ),
+      ).map(sanitizeSong),
     } as LibraryState;
   },
   partialize: (state) => ({ songs: state.songs }),

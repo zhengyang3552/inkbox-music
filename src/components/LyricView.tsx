@@ -6,6 +6,7 @@ import { EmptyState } from "./EmptyState";
 interface LyricViewProps {
   lines: LyricLine[];
   amllLines: AmllLyricLine[];
+  plainLines?: string[];
   currentTime: number;
   isPlaying: boolean;
   onSeek: (seconds: number) => Promise<void>;
@@ -14,6 +15,7 @@ interface LyricViewProps {
 
 export function LyricView({
   lines,
+  plainLines = [],
   currentTime,
   onSeek,
   onImport,
@@ -62,6 +64,15 @@ export function LyricView({
     if (autoScrollTimerRef.current) window.clearTimeout(autoScrollTimerRef.current);
   }, []);
 
+  if (lines.length === 0 && plainLines.length > 0) {
+    return (
+      <div className="plain-lyrics">
+        <span>仅有纯文本歌词，无法逐行同步。</span>
+        {plainLines.map((line, index) => <p key={`${line}-${index}`}>{line}</p>)}
+      </div>
+    );
+  }
+
   if (lines.length === 0) {
     return (
       <EmptyState
@@ -108,19 +119,29 @@ export function LyricView({
         }}
       >
         <div className="lyric-scroll__spacer" />
-        {lines.map((line, index) => (
-          <button
-            className={`lyric-line ${index === activeIndex ? "is-current" : ""}`}
-            key={line.id}
-            ref={(element) => {
-              if (element) lineRefs.current.set(line.id, element);
-              else lineRefs.current.delete(line.id);
-            }}
-            onClick={() => handleLyricClick(line)}
-          >
-            {line.text}
-          </button>
-        ))}
+        {lines.map((line, index) => {
+          const distance = activeIndex < 0 ? Number.POSITIVE_INFINITY : Math.abs(index - activeIndex);
+          const lineState = index === activeIndex
+            ? "is-current"
+            : distance === 1
+              ? "is-near-current"
+              : distance === 2
+                ? "is-mid-current"
+                : "is-far-current";
+          return (
+            <button
+              className={`lyric-line ${lineState}`}
+              key={line.id}
+              ref={(element) => {
+                if (element) lineRefs.current.set(line.id, element);
+                else lineRefs.current.delete(line.id);
+              }}
+              onClick={() => handleLyricClick(line)}
+            >
+              {line.text}
+            </button>
+          );
+        })}
         <div className="lyric-scroll__spacer" />
       </div>
       {!followCurrentLyric && (

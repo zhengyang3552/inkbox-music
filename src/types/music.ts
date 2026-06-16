@@ -38,6 +38,18 @@ export interface Song {
   gradientCover?: GradientCover;
   coverMode?: "auto" | "gradient";
   lyricPath?: string;
+  lyricSource?: "local-import" | "same-name";
+  onlineLyrics?: {
+    provider: "lrclib";
+    id: number;
+    trackName: string;
+    artistName: string;
+    albumName?: string;
+    duration?: number;
+    syncedLyrics?: string | null;
+    plainLyrics?: string | null;
+    fetchedAt: number;
+  };
   liked?: boolean;
   unavailable?: boolean;
   metadataSource?: "embedded" | "filename" | "user";

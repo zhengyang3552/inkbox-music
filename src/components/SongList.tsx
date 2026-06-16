@@ -1,5 +1,4 @@
 import {
-  FileImage,
   FileMusic,
   FolderOpen,
   Heart,
@@ -8,10 +7,9 @@ import {
   ListMusic,
   ListPlus,
   MoreHorizontal,
-  Palette,
   Pause,
   Play,
-  Sparkles,
+  Search,
   Trash2,
 } from "lucide-react";
 import {
@@ -22,21 +20,19 @@ import {
   type MouseEvent,
 } from "react";
 import { createPortal } from "react-dom";
-import { chooseCoverImage } from "../services/coverService";
 import { chooseLyricFile, readLyrics } from "../services/lyricService";
 import { revealSong } from "../services/systemService";
 import { useLibraryStore } from "../stores/libraryStore";
 import { usePlayerStore } from "../stores/playerStore";
 import { useUiStore } from "../stores/uiStore";
-import type { GradientCover, Song } from "../types/music";
-import { defaultGradientFor } from "../utils/gradientCover";
+import type { Song } from "../types/music";
 import { formatTime } from "../utils/formatTime";
 import { CoverArt } from "./CoverArt";
 import { ConfirmDialog } from "./ConfirmDialog";
-import { GradientCoverModal } from "./GradientCoverModal";
 import { SongInfoModal } from "./SongInfoModal";
 import { AddToPlaylistModal } from "./AddToPlaylistModal";
 import { usePlaylistStore } from "../stores/playlistStore";
+import { OnlineLyricsModal } from "./OnlineLyricsModal";
 
 interface SongListProps {
   songs: Song[];
@@ -60,10 +56,9 @@ export function SongList({ songs, playlistId }: SongListProps) {
   const [menuSongId, setMenuSongId] = useState<string | null>(null);
   const [menuPosition, setMenuPosition] = useState({ left: 0, top: 0 });
   const [infoSong, setInfoSong] = useState<Song | null>(null);
-  const [gradientSong, setGradientSong] = useState<Song | null>(null);
-  const [gradientDraft, setGradientDraft] = useState<GradientCover | null>(null);
   const [removeCandidate, setRemoveCandidate] = useState<Song | null>(null);
   const [playlistCandidate, setPlaylistCandidate] = useState<Song | null>(null);
+  const [onlineLyricsSong, setOnlineLyricsSong] = useState<Song | null>(null);
   const [removePlaylistCandidate, setRemovePlaylistCandidate] = useState<Song | null>(null);
   const rowRefs = useRef(new Map<string, HTMLDivElement>());
   const activeMenuSong = songs.find((song) => song.id === menuSongId);
@@ -162,16 +157,8 @@ export function SongList({ songs, playlistId }: SongListProps) {
       showToast("没有匹配到有效的 LRC 时间行", "error");
       return;
     }
-    updateEverywhere(song, { lyricPath: path });
+    updateEverywhere(song, { lyricPath: path, lyricSource: "local-import" });
     showToast("歌词导入成功", "success");
-    setMenuSongId(null);
-  }
-
-  async function changeCover(song: Song) {
-    const customCover = await chooseCoverImage();
-    if (!customCover) return;
-    updateEverywhere(song, { customCover, coverMode: "auto" });
-    showToast("封面已更新", "success");
     setMenuSongId(null);
   }
 
@@ -193,7 +180,7 @@ export function SongList({ songs, playlistId }: SongListProps) {
     <>
       <div className="song-table" role="grid" aria-label="歌曲列表">
         <div className="song-table__head" role="row">
-          <span>歌曲</span><span>专辑</span><span>时长</span><span />
+          <span>歌曲</span><span>专辑</span><span /><span>时长</span><span />
         </div>
         {songs.map((song, index) => {
           const playing = currentSong?.id === song.id;
@@ -234,9 +221,28 @@ export function SongList({ songs, playlistId }: SongListProps) {
                 </span>
               </span>
               <span className="song-row__album">{song.album}</span>
+              <span className="song-row__like-cell">
+                <button
+                  className={`song-row__like ${song.liked ? "is-liked" : ""}`}
+                  title={song.liked ? "取消喜欢" : "喜欢"}
+                  aria-label={song.liked ? "取消喜欢" : "喜欢"}
+                  onPointerDown={(event) => event.stopPropagation()}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    updateEverywhere(song, { liked: !song.liked });
+                  }}
+                >
+                  <Heart fill={song.liked ? "currentColor" : "none"} />
+                </button>
+              </span>
               <span>{formatTime(song.duration)}</span>
               <span className="song-row__menu-wrap">
-                <button className="song-row__more" title="更多操作" onClick={(event) => openMenu(event, song.id)}>
+                <button
+                  className="song-row__more"
+                  title="更多操作"
+                  onPointerDown={(event) => event.stopPropagation()}
+                  onClick={(event) => openMenu(event, song.id)}
+                >
                   <MoreHorizontal />
                 </button>
               </span>
@@ -253,14 +259,15 @@ export function SongList({ songs, playlistId }: SongListProps) {
           <button onClick={() => void startSong(activeMenuSong.id)}><Play />播放</button>
           <button onClick={() => { playNextSong(activeMenuSong); setMenuSongId(null); showToast("已设为下一首播放", "success"); }}><ListEnd />下一首播放</button>
           <button onClick={() => { addToQueue(activeMenuSong); setMenuSongId(null); showToast("已添加到队列", "success"); }}><ListPlus />添加到队列</button>
-          <button onClick={() => { updateEverywhere(activeMenuSong, { liked: !activeMenuSong.liked }); setMenuSongId(null); }}><Heart fill={activeMenuSong.liked ? "currentColor" : "none"} />{activeMenuSong.liked ? "取消喜欢" : "喜欢"}</button>
           <button onClick={() => { setPlaylistCandidate(activeMenuSong); setMenuSongId(null); }}><ListMusic />添加到歌单</button>
+          <button onClick={() => { updateEverywhere(activeMenuSong, { liked: !activeMenuSong.liked }); setMenuSongId(null); }}><Heart fill={activeMenuSong.liked ? "currentColor" : "none"} />{activeMenuSong.liked ? "取消喜欢" : "喜欢"}</button>
+          <button onClick={() => { setOnlineLyricsSong(activeMenuSong); setMenuSongId(null); }}><Search />在线获取歌词</button>
+          <button onClick={() => void importLyrics(activeMenuSong)}><FileMusic />导入本地歌词</button>
+          {activeMenuSong.onlineLyrics && (
+            <button onClick={() => { updateEverywhere(activeMenuSong, { onlineLyrics: undefined }); setMenuSongId(null); showToast("歌词缓存已移除", "success"); }}><Trash2 />移除歌词缓存</button>
+          )}
           {playlistId && <button className="is-danger" onClick={() => { setRemovePlaylistCandidate(activeMenuSong); setMenuSongId(null); }}><Trash2 />从当前歌单移除</button>}
           <hr />
-          <button onClick={() => void importLyrics(activeMenuSong)}><FileMusic />导入歌词</button>
-          <button onClick={() => void changeCover(activeMenuSong)}><FileImage />更换封面</button>
-          <button onClick={() => { updateEverywhere(activeMenuSong, { coverMode: "gradient" }); setMenuSongId(null); }}><Sparkles />使用渐变封面</button>
-          <button onClick={() => { setGradientSong(activeMenuSong); setGradientDraft(activeMenuSong.gradientCover ?? defaultGradientFor(activeMenuSong)); setMenuSongId(null); }}><Palette />编辑渐变封面</button>
           <button onClick={() => { setInfoSong(activeMenuSong); setMenuSongId(null); }}><Info />查看歌曲信息</button>
           <button onClick={() => void reveal(activeMenuSong)}><FolderOpen />在资源管理器中显示</button>
           <hr />
@@ -273,16 +280,14 @@ export function SongList({ songs, playlistId }: SongListProps) {
       )}
       {infoSong && <SongInfoModal song={infoSong} onClose={() => setInfoSong(null)} />}
       {playlistCandidate && <AddToPlaylistModal song={playlistCandidate} onClose={() => setPlaylistCandidate(null)} />}
-      {gradientSong && gradientDraft && (
-        <GradientCoverModal
-          song={gradientSong}
-          value={gradientDraft}
-          onChange={setGradientDraft}
-          onClose={() => setGradientSong(null)}
-          onSave={() => {
-            updateEverywhere(gradientSong, { gradientCover: gradientDraft, coverMode: "gradient" });
-            setGradientSong(null);
-            showToast("渐变封面已保存", "success");
+      {onlineLyricsSong && (
+        <OnlineLyricsModal
+          song={onlineLyricsSong}
+          onClose={() => setOnlineLyricsSong(null)}
+          onUse={(onlineLyrics) => {
+            updateEverywhere(onlineLyricsSong, { onlineLyrics });
+            setOnlineLyricsSong(null);
+            showToast(onlineLyrics.syncedLyrics ? "在线歌词已绑定" : "已绑定纯文本歌词", "success");
           }}
         />
       )}

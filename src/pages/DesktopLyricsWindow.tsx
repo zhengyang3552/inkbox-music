@@ -22,6 +22,7 @@ export function DesktopLyricsWindow() {
     let disposeResize: (() => void) | undefined;
     let resizeTimer: number | undefined;
     const currentWindow = getCurrentWindow();
+    void currentWindow.setShadow(false).catch(() => undefined);
     void listen<DesktopLyricsPayload>("desktop-lyrics-state", (event) => setState(event.payload))
       .then((unlisten) => {
         disposeLyrics = unlisten;

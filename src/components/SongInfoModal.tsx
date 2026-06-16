@@ -1,7 +1,8 @@
 import { X } from "lucide-react";
+import { lyricSourceLabel } from "../services/lyricService";
 import type { Song } from "../types/music";
 import { formatTime } from "../utils/formatTime";
-import { CoverArt, getSongCoverUrl } from "./CoverArt";
+import { CoverArt } from "./CoverArt";
 
 interface SongInfoModalProps {
   song: Song;
@@ -14,13 +15,7 @@ function fileSize(bytes?: number): string {
 }
 
 export function SongInfoModal({ song, onClose }: SongInfoModalProps) {
-  const coverSource = song.customCover
-    ? "自定义"
-    : song.embeddedCover
-      ? "内嵌"
-      : getSongCoverUrl(song)
-        ? "内嵌"
-        : "渐变";
+  const coverSource = song.embeddedCover ? "内嵌封面" : "默认渐变封面";
   const rows = [
     ["标题", song.title],
     ["歌手", song.artist],
@@ -34,7 +29,7 @@ export function SongInfoModal({ song, onClose }: SongInfoModalProps) {
     ["码率", song.bitrate ? `${Math.round(song.bitrate / 1000)} kbps` : "未知"],
     ["采样率", song.sampleRate ? `${song.sampleRate} Hz` : "未知"],
     ["声道数", song.channels ?? "未知"],
-    ["歌词状态", song.lyricPath ? "已关联" : "无歌词"],
+    ["歌词来源", lyricSourceLabel(song)],
     ["封面来源", coverSource],
     ["Metadata 来源", ({ embedded: "内嵌", filename: "文件名推断", user: "用户编辑" })[song.metadataSource ?? "filename"]],
   ];
