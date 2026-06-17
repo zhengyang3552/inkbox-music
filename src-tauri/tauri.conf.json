@@ -31,7 +31,7 @@
   },
   "bundle": {
     "active": true,
-    "targets": ["nsis"],
+    "targets": ["nsis","deb"],
     "resources": {
       "../example_song/Don Toliver - After Party.mp3": "example_song/Don Toliver - After Party.mp3",
       "../example_song/Don Toliver - After Party.lrc": "example_song/Don Toliver - After Party.lrc"
